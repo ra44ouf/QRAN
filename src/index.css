@@ -1,0 +1,211 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------
+ * Fonts: AmiriQuran (Uthmani-script-aware, SIL OFL) for ayah text, Noto
+ * Naskh Arabic (SIL OFL) for UI text. Both self-hosted for offline use.
+ * ------------------------------------------------------------------- */
+@font-face {
+  font-family: "AmiriQuran";
+  src: url("/fonts/AmiriQuran.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "NotoNaskhArabic";
+  src: url("/fonts/noto-naskh-arabic-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --font-ui: "NotoNaskhArabic", "Tahoma", system-ui, sans-serif;
+  --font-quran: "AmiriQuran", "NotoNaskhArabic", serif;
+
+  /* Light-only palette (spec 3.2): calm blue accents on a soft backdrop.
+     The app background is a very light cool-off-white (#f7fafc) rather
+     than stark pure #ffffff — easier on the eyes in prolonged use while
+     still unambiguously a light theme; cards/panels use true white (or
+     glass) on top of it so they still read as "raised" surfaces. */
+  --color-base-white: #ffffff;
+  --color-app-bg: #f6f9fc;
+  --color-ink: #212b36;
+  --color-ink-muted: #647183;
+  --color-brand-50: #eef5fb;
+  --color-brand-100: #dbeaf6;
+  --color-brand-200: #b7d5ed;
+  --color-brand-400: #4f8fc4;
+  --color-brand-500: #2e6da6;
+  --color-brand-600: #235682;
+  --color-divider: #e3eaf1;
+
+  /* Reading backgrounds (spec 3.4 / 5.4) */
+  --color-read-pure-white: #ffffff;
+  --color-read-warm-white: #fdfbf6;
+  --color-read-ivory: #faf6ec;
+  --color-read-snow-blue: #f3f8fc;
+  --color-read-pale-blue: #eef6fb;
+  /* Dim reading-page background (page/paper only — NOT an app-wide dark
+     mode; see index.css note below and README). A soft slate-navy, not
+     pure black, matched with warm off-white ink for comfortable long
+     reading sessions in low light. */
+  --color-read-night-bg: #202b38;
+  --color-read-night-ink: #eef3f7;
+  --color-read-night-badge-bg: #32445a;
+  --color-read-night-badge-ink: #bcd7ec;
+}
+
+:root {
+  color-scheme: light only; /* spec 3.1: never honor dark-mode OS setting */
+}
+
+html,
+body {
+  background: var(--color-app-bg);
+  color: var(--color-ink);
+  font-family: var(--font-ui);
+}
+
+/* Soft, fixed decorative gradient wash behind all content. Glassmorphism
+   only reads as "glass" when there's something varied behind it to blur —
+   against a flat near-white page, frosted panels just look plain white.
+   These are deliberately soft/low-contrast so they never compete with
+   reading content; they're the backdrop iOS-style translucent panels need
+   to actually look translucent. */
+body {
+  position: relative;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(640px circle at 12% -5%, rgba(79, 143, 196, 0.16), transparent 60%),
+    radial-gradient(520px circle at 100% 10%, rgba(167, 139, 250, 0.1), transparent 55%),
+    radial-gradient(600px circle at 90% 85%, rgba(46, 109, 166, 0.1), transparent 55%),
+    radial-gradient(480px circle at 0% 90%, rgba(94, 197, 185, 0.1), transparent 55%);
+}
+
+html[dir="rtl"] body {
+  direction: rtl;
+}
+
+/* Safe-area support for notched phones (spec 3.4) */
+:root {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+html {
+  scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Numbers in prayer times / ayah numbers stay LTR-shaped (Western digits
+   read naturally even inside RTL flow) but keep their visual position.
+   IMPORTANT: this must NOT set `display` — several callers combine this
+   class with a Tailwind `flex`/`inline-flex` utility on the same element
+   (e.g. the ayah-number circle). Setting display here used to silently
+   override that utility depending on CSS layer order, which broke the
+   centering and made ayah numbers overflow their circles. */
+.tabular-ltr {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* Glassmorphism utility (spec 3.3), with solid fallback for browsers
+   without backdrop-filter support */
+.glass {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 30px rgba(46, 109, 166, 0.08);
+}
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .glass {
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+  }
+}
+
+/* Glass button/interactive-element variant (lighter blur than big panels,
+   so small controls stay crisp and legible at their size). */
+.glass-btn {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 2px 10px rgba(46, 109, 166, 0.07);
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .glass-btn {
+    background: rgba(255, 255, 255, 0.42);
+    backdrop-filter: blur(10px) saturate(160%);
+    -webkit-backdrop-filter: blur(10px) saturate(160%);
+  }
+}
+.glass-btn:hover {
+  background: rgba(255, 255, 255, 0.78);
+}
+.glass-btn:active {
+  background: rgba(219, 234, 246, 0.85); /* brand-100-ish press feedback */
+}
+.glass-btn[aria-pressed="true"],
+.glass-btn.glass-btn-active {
+  background: rgba(46, 109, 166, 0.16);
+  border-color: rgba(46, 109, 166, 0.3);
+}
+
+/* Ayah-number badge: sized in `em` relative to the surrounding Quran text
+   so it scales with the font-size control, and uses min-width + padding
+   (never a fixed width) so 1-, 2- and 3-digit ayah numbers (e.g. 286) all
+   fit without ever being clipped by their circle. */
+.ayah-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.7em;
+  height: 1.7em;
+  padding: 0 0.3em;
+  margin: 0 0.25em;
+  border-radius: 999px;
+  font-size: 0.42em; /* relative to the ayah paragraph's own font-size */
+  line-height: 1;
+  vertical-align: middle;
+  background: var(--color-brand-100);
+  color: var(--color-brand-600);
+  user-select: none;
+}
+.ayah-badge-night {
+  background: var(--color-read-night-badge-bg);
+  color: var(--color-read-night-badge-ink);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Comfortable tap targets (spec 3.4) */
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
