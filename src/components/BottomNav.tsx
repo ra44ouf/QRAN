@@ -17,21 +17,21 @@ export function BottomNav() {
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       aria-label="التنقل الرئيسي"
     >
-      <ul className="flex justify-around items-stretch px-1 pt-1.5">
+      <ul className="flex justify-around items-stretch px-1 pt-2 pb-1">
         {ITEMS.map(({ to, label, icon: Icon, end }) => (
           <li key={to} className="flex-1">
             <NavLink
               to={to}
               end={end}
               className={({ isActive }) =>
-                `flex flex-col items-center gap-0.5 py-2 mx-0.5 rounded-2xl text-[11px] transition-colors ${
-                  isActive ? "text-brand-600 font-semibold bg-brand-50" : "text-ink-muted"
+                `relative flex flex-col items-center gap-1 py-2.5 mx-0.5 rounded-[1.35rem] text-[11px] transition-colors ${
+                  isActive ? "text-brand-600 font-semibold bg-brand-50 after:absolute after:bottom-1 after:left-1/4 after:right-1/4 after:h-[3px] after:rounded-full after:bg-brand-500" : "text-ink-muted"
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  <Icon size={22} strokeWidth={isActive ? 2.4 : 1.8} />
+                  <Icon size={24} strokeWidth={isActive ? 2.4 : 1.8} />
                   <span>{label}</span>
                 </>
               )}

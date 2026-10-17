@@ -1,5 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { Headphones, Play, Pause, Square, AlertTriangle, WifiOff, Download } from "lucide-react";
+import {
+  Headphones,
+  Play,
+  Pause,
+  Square,
+  AlertTriangle,
+  WifiOff,
+  Download,
+  Minus,
+  SkipBack,
+  Rewind,
+  FastForward,
+} from "lucide-react";
 import { RECITERS, audioUrlFor, type Reciter } from "../../lib/reciters";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 
@@ -13,14 +25,7 @@ function formatTime(seconds: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-/**
- * Top-bar "استمع" control. Clicking the headphone icon opens a small
- * panel listing reciters; picking one animates the SAME panel into a
- * single elongated player bar (time, play/pause, stop, download) instead
- * of popping a separate floating element — this also fixes the earlier
- * bug where the floating player could sit under the bottom nav bar and
- * become hard to reach on mobile.
- */
+/** Surah audio control with a compact frosted reciter picker and wide mobile player. */
 export function SurahListenControl({ surah, surahName }: { surah: number; surahName: string }) {
   const online = useOnlineStatus();
   const [panel, setPanel] = useState<PanelView>("closed");
@@ -31,18 +36,25 @@ export function SurahListenControl({ surah, surahName }: { surah: number; surahN
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
   const isActive = state === "playing" || state === "paused" || state === "loading";
+  const progress = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
 
   useEffect(() => {
     function onOutside(e: MouseEvent) {
-      if (!containerRef.current || containerRef.current.contains(e.target as Node)) return;
-      // Collapse the panel on outside click, but never stop playback just
-      // because the user tapped elsewhere — only an explicit stop does that.
-      setPanel("closed");
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        // Dismiss the surface, but don't interrupt an active recitation.
+        setPanel("closed");
+      }
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setPanel("closed");
     }
     document.addEventListener("mousedown", onOutside);
-    return () => document.removeEventListener("mousedown", onOutside);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onOutside);
+      document.removeEventListener("keydown", onKeyDown);
+    };
   }, []);
 
   useEffect(() => {
@@ -56,11 +68,9 @@ export function SurahListenControl({ surah, surahName }: { surah: number; surahN
     };
   }, []);
 
-  // Switch surah while already playing: follow along with the same reciter.
+  // Keep the same reciter selected when moving to another surah.
   useEffect(() => {
-    if (state === "playing" || state === "paused") {
-      if (reciter) play(reciter);
-    }
+    if ((state === "playing" || state === "paused") && reciter) play(reciter);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [surah]);
 
@@ -82,13 +92,10 @@ export function SurahListenControl({ surah, surahName }: { surah: number; surahN
     audio.onended = () => setState("idle");
     audio.ontimeupdate = () => setCurrentTime(audio.currentTime);
     audio.onloadedmetadata = () => setDuration(audio.duration || 0);
-    audio
-      .play()
-      .then(() => setState("playing"))
-      .catch(() => {
-        setState("error");
-        setErrorMsg("تعذر بدء التشغيل.");
-      });
+    void audio.play().then(() => setState("playing")).catch(() => {
+      setState("error");
+      setErrorMsg("تعذر بدء التشغيل.");
+    });
   }
 
   function togglePause() {
@@ -97,13 +104,33 @@ export function SurahListenControl({ surah, surahName }: { surah: number; surahN
     if (state === "playing") {
       audio.pause();
       setState("paused");
-    } else if (state === "paused") {
-      void audio.play().then(() => setState("playing"));
+    } else if (state === "paused" || state === "idle") {
+      void audio.play().then(() => setState("playing")).catch(() => {
+        setState("error");
+        setErrorMsg("تعذر بدء التشغيل.");
+      });
     }
   }
 
-  /** Fully stops playback AND aborts any in-flight download — just calling
-   * .pause() is not enough if the browser is still fetching the file. */
+  function seekBy(seconds: number) {
+    const audio = audioRef.current;
+    if (!audio || !Number.isFinite(audio.duration)) return;
+    audio.currentTime = Math.max(0, Math.min(audio.duration, audio.currentTime + seconds));
+    setCurrentTime(audio.currentTime);
+  }
+
+  function restart() {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.currentTime = 0;
+      setCurrentTime(0);
+      if (audio.paused && state !== "paused") {
+        void audio.play().then(() => setState("playing")).catch(() => setState("error"));
+      }
+    }
+  }
+
+  /** Fully stops playback and aborts any in-flight download. */
   function stop() {
     const audio = audioRef.current;
     if (audio) {
@@ -120,11 +147,8 @@ export function SurahListenControl({ surah, surahName }: { surah: number; surahN
   }
 
   function togglePanel() {
-    if (panel !== "closed") {
-      setPanel("closed");
-    } else {
-      setPanel(isActive ? "player" : "list");
-    }
+    if (panel !== "closed") setPanel("closed");
+    else setPanel(isActive ? "player" : "list");
   }
 
   return (
@@ -133,124 +157,112 @@ export function SurahListenControl({ surah, surahName }: { surah: number; surahN
         onClick={togglePanel}
         aria-label="استمع إلى السورة"
         aria-expanded={panel !== "closed"}
-        className={`glass-btn w-9 h-9 rounded-full flex items-center justify-center ${
-          isActive ? "text-brand-600" : "text-ink-muted"
-        }`}
+        className={`glass-btn w-9 h-9 rounded-full flex items-center justify-center ${isActive ? "text-brand-600" : "text-ink-muted"}`}
       >
         <Headphones size={18} />
       </button>
 
-      {panel !== "closed" && (
-        <div
-          className={`glass absolute left-0 top-11 rounded-2xl z-50 shadow-lg overflow-hidden transition-[width] duration-300 ease-out ${
-            panel === "player" ? "w-[19rem]" : "w-64"
-          }`}
-        >
-          {panel === "list" && (
-            <div className="p-2 animate-[fadeIn_0.2s_ease]">
-              {!online ? (
-                <div className="flex items-center gap-2 p-3 text-xs text-amber-700">
-                  <WifiOff size={16} className="shrink-0" />
-                  الاستماع يحتاج اتصالاً بالإنترنت.
-                </div>
-              ) : (
-                <>
-                  <p className="text-[11px] text-ink-muted px-2 pt-1 pb-2">
-                    اختر القارئ — سورة {surahName}
-                  </p>
-                  {RECITERS.map((r) => (
-                    <button
-                      key={r.id}
-                      onClick={() => play(r)}
-                      className="w-full text-right px-3 py-2 rounded-xl text-sm hover:bg-brand-50 transition-colors"
-                    >
-                      {r.nameAr}
-                    </button>
-                  ))}
-                </>
-              )}
+      {panel === "list" && (
+        <div className="listen-panel listen-panel--list animate-[fadeIn_0.2s_ease]" role="dialog" aria-label="اختيار القارئ">
+          <div className="listen-panel-heading">
+            <p className="text-xs text-ink-muted">اختر القارئ — سورة {surahName}</p>
+            <button
+              type="button"
+              onClick={() => setPanel("closed")}
+              aria-label="إغلاق قائمة القراء"
+              className="listen-panel-close"
+            >
+              <Minus size={20} />
+            </button>
+          </div>
+          {!online ? (
+            <div className="flex items-center gap-2 px-4 py-3 text-sm text-amber-700">
+              <WifiOff size={17} className="shrink-0" />
+              الاستماع يحتاج اتصالاً بالإنترنت.
+            </div>
+          ) : (
+            <div className="px-2 pb-2">
+              {RECITERS.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => play(r)}
+                  className="listen-reciter-option"
+                >
+                  {r.nameAr}
+                </button>
+              ))}
             </div>
           )}
+        </div>
+      )}
 
-          {panel === "player" && reciter && (
-            <div className="p-3 animate-[fadeIn_0.25s_ease]">
-              {state === "error" ? (
-                <div className="flex items-start gap-2 p-1">
-                  <AlertTriangle size={18} className="text-amber-500 shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-xs text-ink-muted">{errorMsg}</p>
-                    <div className="flex gap-2 mt-2">
-                      <button
-                        onClick={() => play(reciter)}
-                        className="px-3 py-1 rounded-full bg-brand-500 text-white text-xs"
-                      >
-                        إعادة المحاولة
-                      </button>
-                      <button
-                        onClick={stop}
-                        className="px-3 py-1 rounded-full glass-btn text-brand-600 text-xs"
-                      >
-                        إغلاق
-                      </button>
-                    </div>
-                  </div>
+      {panel === "player" && reciter && (
+        <div className="listen-panel listen-panel--player p-3 sm:p-4 animate-[fadeIn_0.25s_ease]" role="dialog" aria-label="مشغل التلاوة">
+          {state === "error" ? (
+            <div className="flex items-start gap-3 p-1">
+              <AlertTriangle size={20} className="text-amber-500 shrink-0 mt-1" />
+              <div className="flex-1 min-w-0">
+                <p className="listen-player-title">تعذر تشغيل التلاوة</p>
+                <p className="text-sm text-ink-muted mt-1">{errorMsg}</p>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <button onClick={() => play(reciter)} className="px-4 py-2 rounded-full bg-brand-500 text-white text-sm">
+                    إعادة المحاولة
+                  </button>
+                  <button onClick={stop} className="px-4 py-2 rounded-full glass-btn text-brand-600 text-sm">
+                    إغلاق
+                  </button>
                 </div>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold truncate">{reciter.nameAr}</p>
-                      <p className="text-[11px] text-ink-muted truncate">سورة {surahName}</p>
-                    </div>
-                    <a
-                      href={audioUrlFor(reciter.id, reciter.bitrate, surah)}
-                      download={`${surahName}-${reciter.nameAr}.mp3`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="تنزيل السورة كاملة (mp3) — يعتمد على دعم المتصفح"
-                      aria-label="تنزيل السورة"
-                      className="glass-btn w-8 h-8 rounded-full flex items-center justify-center text-brand-600 shrink-0"
-                    >
-                      <Download size={15} />
-                    </a>
-                  </div>
-
-                  {/* progress bar + time */}
-                  <div className="mb-2">
-                    <div className="h-1.5 rounded-full bg-brand-100 overflow-hidden">
-                      <div
-                        className="h-full bg-brand-500 transition-[width] duration-200"
-                        style={{
-                          width: duration > 0 ? `${Math.min(100, (currentTime / duration) * 100)}%` : "0%",
-                        }}
-                      />
-                    </div>
-                    <div className="flex justify-between mt-1 text-[10px] text-ink-muted tabular-ltr">
-                      <span>{formatTime(currentTime)}</span>
-                      <span>{state === "loading" ? "جارِ التحميل…" : formatTime(duration)}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-center gap-3">
-                    <button
-                      onClick={togglePause}
-                      disabled={state === "loading"}
-                      aria-label={state === "playing" ? "إيقاف مؤقت" : "استئناف"}
-                      className="w-10 h-10 rounded-full bg-brand-500 text-white flex items-center justify-center disabled:opacity-50"
-                    >
-                      {state === "playing" ? <Pause size={18} /> : <Play size={18} />}
-                    </button>
-                    <button
-                      onClick={stop}
-                      aria-label="إيقاف الاستماع"
-                      className="glass-btn w-10 h-10 rounded-full text-brand-600 flex items-center justify-center"
-                    >
-                      <Square size={16} />
-                    </button>
-                  </div>
-                </>
-              )}
+              </div>
             </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-3 mb-2.5" dir="rtl">
+                <div className="min-w-0">
+                  <p className="listen-player-title truncate">{reciter.nameAr}</p>
+                  <p className="listen-player-subtitle truncate">سورة {surahName}</p>
+                </div>
+                <a
+                  href={audioUrlFor(reciter.id, reciter.bitrate, surah)}
+                  download={`${surahName}-${reciter.nameAr}.mp3`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="تنزيل السورة كاملة (mp3) — يعتمد على دعم المتصفح"
+                  aria-label="تنزيل السورة"
+                  className="listen-download"
+                >
+                  <Download size={21} />
+                </a>
+              </div>
+
+              <div className="px-1" dir="ltr">
+                <div className="listen-progress-track">
+                  <div className="listen-progress-fill" style={{ width: `${progress}%` }} />
+                  <span className="listen-progress-thumb" style={{ left: `${progress}%` }} />
+                </div>
+                <div className="listen-time-row tabular-ltr">
+                  <span>{formatTime(currentTime)}</span>
+                  <span>{state === "loading" ? "جارِ التحميل…" : formatTime(duration)}</span>
+                </div>
+              </div>
+
+              <div className="listen-controls" dir="ltr">
+                <button onClick={restart} aria-label="العودة إلى بداية السورة" className="listen-control-button" disabled={state === "loading"}>
+                  <SkipBack size={23} />
+                </button>
+                <button onClick={() => seekBy(-10)} aria-label="الرجوع عشر ثوانٍ" className="listen-control-button" disabled={state === "loading"}>
+                  <Rewind size={22} />
+                </button>
+                <button onClick={togglePause} aria-label={state === "playing" ? "إيقاف مؤقت" : "استئناف"} className="listen-control-button listen-control-button--primary" disabled={state === "loading"}>
+                  {state === "playing" ? <Pause size={26} /> : <Play size={26} />}
+                </button>
+                <button onClick={() => seekBy(10)} aria-label="التقديم عشر ثوانٍ" className="listen-control-button" disabled={state === "loading"}>
+                  <FastForward size={22} />
+                </button>
+                <button onClick={stop} aria-label="إيقاف الاستماع" className="listen-control-button">
+                  <Square size={20} fill="currentColor" />
+                </button>
+              </div>
+            </>
           )}
         </div>
       )}

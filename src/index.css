@@ -209,3 +209,443 @@ button,
 a {
   -webkit-tap-highlight-color: transparent;
 }
+
+/* ---------------------------------------------------------------------
+   Reference-matched home page surfaces and listening popovers.
+   Scoped to the home/reader UI so unrelated pages keep their existing layout.
+   ------------------------------------------------------------------- */
+.home-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  padding-bottom: 0.5rem;
+}
+
+.home-hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 9.2rem;
+  margin: -0.1rem -0.75rem -0.35rem;
+  padding: 0.6rem 0.7rem 0.4rem;
+  overflow: hidden;
+  border-radius: 0 0 2.5rem 2.5rem;
+  background-image: linear-gradient(180deg, rgba(244, 250, 255, 0.06), rgba(247, 250, 252, 0.38)), url("/decorations/home-sky.svg");
+  background-size: cover;
+  background-position: center 36%;
+}
+.home-hero::after {
+  content: "";
+  position: absolute;
+  inset: 54% 0 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(247, 250, 252, 0), var(--color-app-bg));
+  pointer-events: none;
+}
+.home-brand {
+  text-align: center;
+  width: 100%;
+  padding-top: 0.12rem;
+}
+.home-brand h1 {
+  color: #155487;
+  font-size: clamp(2.8rem, 11vw, 3.65rem);
+  line-height: 1.17;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  margin: 0;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+}
+.home-brand-english {
+  margin-top: 0.05rem;
+  color: #526a85;
+  font-family: system-ui, sans-serif;
+  font-size: 0.86rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  line-height: 1.4;
+}
+.home-tagline {
+  margin-top: 0.65rem;
+  color: #4c627d;
+  font-size: clamp(0.9rem, 3.7vw, 1.07rem);
+  line-height: 1.7;
+  text-align: center;
+}
+.home-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 3.05rem;
+  padding: 0 1rem;
+  border: 1px solid rgba(255,255,255,0.95);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.82);
+  box-shadow: 0 7px 24px rgba(45, 112, 170, 0.09), inset 0 1px 0 rgba(255,255,255,0.9);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+}
+.home-search-icon {
+  flex: none;
+  color: #5b6d82;
+  margin-inline-start: 0.05rem;
+}
+.home-search input {
+  min-width: 0;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: right;
+}
+.home-search input::placeholder { color: #7a8ba0; opacity: 1; }
+.home-search:focus-within {
+  box-shadow: 0 0 0 3px rgba(46, 109, 166, 0.12), 0 7px 24px rgba(45, 112, 170, 0.09);
+}
+.home-surface {
+  position: relative;
+  display: flex;
+  border: 1px solid rgba(255,255,255,0.92);
+  border-radius: 1.55rem;
+  background: rgba(255,255,255,0.72);
+  box-shadow: 0 9px 28px rgba(57, 112, 163, 0.075), inset 0 1px 0 rgba(255,255,255,0.92);
+  backdrop-filter: blur(16px) saturate(145%);
+  -webkit-backdrop-filter: blur(16px) saturate(145%);
+}
+.home-featured {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 1rem 1.05rem;
+  overflow: hidden;
+}
+.home-featured::before {
+  content: "۞";
+  position: absolute;
+  top: 1.8rem;
+  left: -1.35rem;
+  color: rgba(116, 178, 226, 0.12);
+  font-size: 6.5rem;
+  line-height: 1;
+  pointer-events: none;
+  transform: rotate(-18deg);
+}
+.home-featured-heading {
+  display: flex;
+  justify-content: flex-start;
+  position: relative;
+  z-index: 1;
+}
+.home-featured-heading span {
+  border-radius: 999px;
+  background: #eaf5ff;
+  color: #1766ad;
+  padding: 0.25rem 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.home-featured-ayah {
+  position: relative;
+  z-index: 1;
+  margin: 0.65rem 0 0.5rem;
+  color: #142d4d;
+  font-family: var(--font-quran);
+  font-size: clamp(1.45rem, 6vw, 1.9rem);
+  line-height: 2;
+  text-align: center;
+  text-wrap: pretty;
+}
+.home-featured-footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  margin-top: auto;
+}
+.home-featured-source {
+  color: #627893;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.home-featured-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: #0870c9;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.home-featured-link:hover { color: #064f91; }
+.home-continue {
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 0.85rem;
+  min-height: 5rem;
+  text-decoration: none;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.home-continue:active { transform: scale(0.99); }
+.home-continue-icon {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  flex: none;
+  border-radius: 1.25rem;
+  color: #0870c9;
+  background: #e5f3ff;
+}
+.home-continue-copy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+.home-continue-label {
+  color: #73869f;
+  font-size: 0.82rem;
+}
+.home-continue-title {
+  color: #122c4c;
+  font-size: 1rem;
+  line-height: 1.55;
+  font-weight: 750;
+  text-wrap: pretty;
+}
+.home-continue-arrow { flex: none; color: #91b7d9; }
+.home-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  direction: rtl;
+}
+.home-shortcut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  gap: 0.45rem;
+  color: #526a85;
+  text-decoration: none;
+}
+.home-shortcut-icon {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  max-width: 5rem;
+  height: 4.2rem;
+  border: 1px solid rgba(255,255,255,0.95);
+  border-radius: 1.4rem;
+  background: rgba(255,255,255,0.66);
+  box-shadow: 0 7px 22px rgba(59, 120, 172, 0.055), inset 0 1px 0 rgba(255,255,255,0.9);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.home-shortcut:active .home-shortcut-icon { transform: scale(0.96); }
+.home-shortcut-label {
+  font-size: 0.8rem;
+  line-height: 1.35;
+  text-align: center;
+  white-space: nowrap;
+}
+.home-shortcut-quran { background: linear-gradient(135deg, rgba(216,239,255,.62), rgba(255,255,255,.75)); }
+.home-shortcut-prayer { background: linear-gradient(135deg, rgba(217,250,241,.6), rgba(255,255,255,.75)); }
+.home-shortcut-relax { background: linear-gradient(135deg, rgba(241,228,255,.6), rgba(255,255,255,.75)); }
+.home-shortcut-settings { background: linear-gradient(135deg, rgba(255,243,211,.65), rgba(255,255,255,.75)); }
+.home-bookmarks {
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 4.6rem;
+  padding: 0.75rem 0.9rem;
+  color: inherit;
+  text-decoration: none;
+}
+.home-bookmarks-main, .home-bookmarks-count {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.home-bookmarks-main { gap: 0.65rem; }
+.home-bookmarks-icon {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  flex: none;
+  border-radius: 1.25rem;
+  color: #d92962;
+  background: #ffedf3;
+}
+.home-bookmarks-title {
+  color: #122c4c;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  font-weight: 750;
+}
+.home-bookmarks-count {
+  gap: 0.45rem;
+  color: #286da7;
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+/* The reciter picker and player deliberately use independent positioning:
+   the picker stays compact; the full player can span the reading area on a phone. */
+.listen-panel {
+  z-index: 60;
+  color: var(--color-ink);
+  border-radius: 1.45rem;
+  border: 1px solid rgba(255,255,255,0.78);
+  background: rgba(248, 251, 253, 0.82);
+  box-shadow: 0 18px 48px rgba(27, 64, 92, 0.14), inset 0 1px 0 rgba(255,255,255,0.9);
+  backdrop-filter: blur(24px) saturate(165%);
+  -webkit-backdrop-filter: blur(24px) saturate(165%);
+  overflow: hidden;
+}
+.listen-panel--list {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 5.7rem);
+  right: max(1.25rem, calc((100vw - 42rem) / 2));
+  width: min(17rem, calc(100vw - 2.5rem));
+  max-height: min(62vh, 30rem);
+  overflow-y: auto;
+}
+.listen-panel--player {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 6.9rem);
+  left: max(1.25rem, calc((100vw - 46rem) / 2));
+  right: max(1.25rem, calc((100vw - 46rem) / 2));
+  width: auto;
+}
+.listen-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem 0.25rem;
+}
+.listen-panel-close {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  color: #5c738a;
+  border-radius: 999px;
+}
+.listen-reciter-option {
+  width: 100%;
+  text-align: right;
+  padding: 0.38rem 0.85rem;
+  border-radius: 0.85rem;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  transition: background 140ms ease;
+}
+.listen-reciter-option:hover, .listen-reciter-option:focus-visible {
+  outline: none;
+  background: rgba(219, 234, 246, 0.66);
+}
+.listen-player-title {
+  color: #202932;
+  font-size: clamp(1rem, 4vw, 1.2rem);
+  font-weight: 750;
+  line-height: 1.55;
+}
+.listen-player-subtitle { color: #788697; font-size: 0.88rem; }
+.listen-download {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #3f6c8a;
+  background: rgba(255,255,255,0.72);
+  box-shadow: 0 3px 12px rgba(46,109,166,.07);
+}
+.listen-progress-track {
+  position: relative;
+  height: 0.38rem;
+  overflow: visible;
+  border-radius: 999px;
+  background: #d7e3ee;
+}
+.listen-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #4b83ad;
+}
+.listen-progress-thumb {
+  position: absolute;
+  top: 50%;
+  width: 0.72rem;
+  height: 0.72rem;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  background: #2e6da6;
+  box-shadow: 0 0 0 3px rgba(46,109,166,.08);
+}
+.listen-time-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.35rem;
+  color: #788697;
+  font-size: 0.8rem;
+}
+.listen-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.55rem, 3.5vw, 1.35rem);
+  padding-top: 0.65rem;
+}
+.listen-control-button {
+  display: grid;
+  place-items: center;
+  width: clamp(2.55rem, 10.5vw, 3rem);
+  height: clamp(2.55rem, 10.5vw, 3rem);
+  flex: none;
+  border-radius: 999px;
+  color: #416d8c;
+  background: rgba(255,255,255,0.72);
+  box-shadow: 0 4px 15px rgba(38,83,116,.07);
+}
+.listen-control-button--primary {
+  width: clamp(2.85rem, 11vw, 3.25rem);
+  height: clamp(2.85rem, 11vw, 3.25rem);
+  color: white;
+  background: #2e6da6;
+  box-shadow: 0 6px 18px rgba(46,109,166,.2);
+}
+.listen-control-button:disabled { opacity: 0.5; }
+
+@media (min-width: 768px) {
+  .home-page { gap: 1.25rem; }
+  .home-hero { min-height: 10.6rem; background-position: center 42%; }
+  .home-brand h1 { font-size: 3.7rem; }
+  .home-featured { padding: 1.25rem 1.4rem; }
+  .home-featured-ayah { font-size: 2rem; }
+  .home-continue { padding: 1rem; }
+  .listen-panel--list { top: 6.1rem; }
+  .listen-panel--player { top: 7.1rem; }
+}
+
+@media (max-width: 360px) {
+  .home-tagline { font-size: 0.84rem; }
+  .home-shortcuts { gap: 0.35rem; }
+  .home-shortcut-label { font-size: 0.72rem; }
+  .home-bookmarks-title { font-size: 0.82rem; }
+  .home-featured-footer { align-items: flex-start; }
+  .listen-controls { gap: 0.45rem; }
+}

@@ -102,8 +102,8 @@ export interface PrayerSettings {
 }
 
 export const DEFAULT_READER_SETTINGS: ReaderSettings = {
-  fontSizePx: 30,
-  background: "pure-white",
+  fontSizePx: 32,
+  background: "ivory",
   mode: "scroll",
   showTafsirInline: false,
 };
